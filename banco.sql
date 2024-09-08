@@ -92,7 +92,7 @@ CREATE TABLE Plazo_Fijo(
     fecha_fin DATE,
     tasa_interes DECIMAL(5, 2) CHECK (tasa_interes > 0), -- Real positivo con 2 decimales
     interes DECIMAL(10, 2) CHECK (interes >= 0), -- Real positivo con 2 decimales
- 
+	-- COLOCAR LOS NOT NULL, Y CUIDADO CON INTERES QUE ES DEBIL XD
     
 	
     nro_suc INT UNSIGNED NOT NULL,
@@ -114,17 +114,13 @@ CREATE TABLE Tasa_Plazo_Fijo (
     tasa DECIMAL(5, 2)
     CHECK (tasa > 0),
     
-    CONSTRAINT pk_periodo
-    PRIMARY KEY (periodo),  -- PREGUNTAR CUAL ES LA LLAVE PRIMARIO O SI SON LOS tres;
-
-    KEY(monto_inf),
-    KEY(monto_sup)
+    CONSTRAINT pk_tasa_plazo_fijo
+    PRIMARY KEY (periodo,monto_inf,monto_sup)  -- PREGUNTAR SI ES LLAVE COMPUESTA DE A TRES, Y CUANDO SE USA "key";
 ) ENGINE=InnoDB;
 
 CREATE TABLE Plazo_Cliente (
-    nro_plazo BIGINT UNSIGNED NOT NULL CHECK (nro_plazo >= 10000000 AND nro_plazo <= 99999999), 
+    nro_plazo BIGINT UNSIGNED NOT NULL , 
     nro_cliente BIGINT UNSIGNED NOT NULL,
-	CHECK (nro_cliente > 9999 AND nro_cliente <= 100000),
     
     CONSTRAINT pk_plazo_cliente PRIMARY KEY (nro_plazo, nro_cliente),  -- Clave primaria compuesta,CONSULTAR
 
@@ -133,7 +129,165 @@ CREATE TABLE Plazo_Cliente (
 
     CONSTRAINT fk_plazo_cliente_nro_cliente_cliente 
     FOREIGN KEY (nro_cliente) REFERENCES Cliente(nro_cliente) 
-);
+)    ENGINE=InnoDB;
 
+CREATE TABLE Prestamo (
+    nro_prestamo BIGINT UNSIGNED NOT NULL CHECK (nro_prestamo >= 10000000 AND nro_prestamo <= 99999999),  -- Natural de 8 cifras
+    fecha DATE NOT NULL,  -- Fecha del préstamo
+    cant_meses TINYINT UNSIGNED NOT NULL CHECK (cant_meses >= 1 AND cant_meses <= 99),  -- Natural de 2 cifras (1 a 99 meses)
+    monto DECIMAL(10, 2) NOT NULL CHECK (monto > 0),  -- Monto del préstamo, real positivo con 2 decimales
+    tasa_interes DECIMAL(5, 2) NOT NULL CHECK (tasa_interes > 0),  -- Tasa de interés, real positivo con 2 decimales
+    interes DECIMAL(10, 2)  CHECK (interes > 0),  -- CONSULTAR SI EL HECHO DE QUE EN EL GRAFICO SE VEAN COMO
+    valor_cuota DECIMAL(10, 2)  CHECK (valor_cuota > 0),  -- ATRIBUTOS DEBILES SIGNIFICA QUE NO DEBEN SER NO NULOS
+    legajo INT UNSIGNED NOT NULL,  -- Referencia al legajo del empleado
+    nro_cliente BIGINT UNSIGNED NOT NULL,  -- Referencia al número de cliente
+    
+    CONSTRAINT pk_prestamo PRIMARY KEY (nro_prestamo),  -- Clave primaria en nro_prestamo
+    CONSTRAINT fk_prestamo_empleado FOREIGN KEY (legajo) REFERENCES Empleado(legajo),  -- Relación con Empleado
+    CONSTRAINT fk_prestamo_cliente FOREIGN KEY (nro_cliente) REFERENCES Cliente(nro_cliente)  -- Relación con Cliente
+) ENGINE=InnoDB;
+
+CREATE TABLE Pago ( -- PREGUNTAR YA QUE ES ENTIDAD DEBIL
+    nro_prestamo BIGINT UNSIGNED NOT NULL,  -- Referencia a nro_prestamo en la tabla Prestamo
+    nro_pago TINYINT UNSIGNED NOT NULL CHECK (nro_pago >= 1 AND nro_pago <= 99),  -- Natural de 2 cifras (1 a 99)
+    fecha_venc DATE NOT NULL,  -- Fecha de vencimiento del pago
+    fecha_pago DATE,  -- Fecha en que se realizó el pago (puede ser NULL si no se ha pagado)
+    
+    CONSTRAINT pk_pago PRIMARY KEY (nro_prestamo, nro_pago),  -- Clave primaria compuesta
+    CONSTRAINT fk_pago_prestamo FOREIGN KEY (nro_prestamo) REFERENCES Prestamo(nro_prestamo)  -- Clave foránea hacia Prestamo
+) ENGINE=InnoDB;
+
+CREATE TABLE Tasa_Prestamo (
+    periodo SMALLINT UNSIGNED NOT NULL,  -- Natural de 3 cifras
+    monto_inf DECIMAL(10, 2) NOT NULL,  -- Real positivo con 2 decimales
+    monto_sup DECIMAL(10, 2) NOT NULL,  -- ESTA OPERACION NO ES VALIDA EN SQL: (monto_sup > 0 AND monto_sup > monto_inf)
+    tasa DECIMAL(5, 2) NOT NULL,  -- Real positivo con 2 decimales
+    
+    CONSTRAINT pk_tasa_prestamo PRIMARY KEY (periodo, monto_inf, monto_sup),  -- Clave primaria compuesta
+    
+    CONSTRAINT chk_monto_inf CHECK (monto_inf > 0),  -- Real positivo con 2 decimales
+    CONSTRAINT chk_monto_sup CHECK (monto_sup > 0),  -- Real positivo
+    CONSTRAINT chk_tasa CHECK (tasa > 0)  -- Real positivo con 2 decimales
+) ENGINE=InnoDB;
+
+CREATE TABLE Caja_Ahorro (
+    nro_ca BIGINT UNSIGNED NOT NULL CHECK (nro_ca >= 10000000 AND nro_ca <= 99999999),  -- Natural de 8 cifras
+    CBU BIGINT UNSIGNED NOT NULL CHECK (CBU >= 100000000000000000 AND CBU <= 999999999999999999),  -- Natural de 18 cifras
+    saldo DECIMAL(15, 2) NOT NULL CHECK (saldo >= 0),  -- Real positivo con 2 decimales
+    
+    CONSTRAINT pk_caja_ahorro PRIMARY KEY (nro_ca)  -- Clave primaria
+) ENGINE=InnoDB;
+
+CREATE TABLE Cliente_CA ( -- RELACION  MUCHOS A MUCHOS
+    nro_cliente BIGINT UNSIGNED NOT NULL,  -- Número de cliente positivo
+    nro_ca BIGINT UNSIGNED NOT NULL,  -- Número de Caja de Ahorro, natural de 8 cifras, no se checkea por la restriccion heredada
+    
+    CONSTRAINT pk_cliente_ca PRIMARY KEY (nro_cliente, nro_ca),  -- Clave primaria compuesta
+    CONSTRAINT fk_cliente_ca_caja FOREIGN KEY (nro_ca) REFERENCES Caja_Ahorro(nro_ca),  -- Relación con la tabla Caja_Ahorro
+    CONSTRAINT fk_cliente_ca_cliente FOREIGN KEY (nro_cliente) REFERENCES Cliente(nro_cliente)  -- Relación con la tabla Cliente
+) ENGINE=InnoDB;
+
+CREATE TABLE Tarjeta (
+    nro_tarjeta BIGINT UNSIGNED NOT NULL CHECK (nro_tarjeta BETWEEN 1000000000000000 AND 9999999999999999),  -- Número de tarjeta, natural de 16 cifras
+    PIN CHAR(32) NOT NULL,  -- PIN almacenado como cadena de 32 caracteres
+    CVT CHAR(32) NOT NULL,  -- CVT almacenado como cadena de 32 caracteres
+    fecha_venc DATE NOT NULL,  -- Fecha de vencimiento
+    nro_cliente BIGINT UNSIGNED NOT NULL,  -- Número de cliente
+    nro_ca BIGINT UNSIGNED NOT NULL,  -- Número de Caja de Ahorro
+    
+    CONSTRAINT pk_tarjeta PRIMARY KEY (nro_tarjeta),  -- Clave primaria
+    CONSTRAINT fk_tarjeta_cliente_ca FOREIGN KEY (nro_cliente, nro_ca) REFERENCES Cliente_CA(nro_cliente, nro_ca)  -- Relación con la tabla Cliente_CA
+) ENGINE=InnoDB;
+
+CREATE TABLE Caja (
+    cod_caja SMALLINT UNSIGNED NOT NULL CHECK (cod_caja BETWEEN 10000 AND 99999),  -- Código de caja, natural de 5 cifras
+    
+    CONSTRAINT pk_caja PRIMARY KEY (cod_caja)  -- Clave primaria
+) ENGINE=InnoDB;
+
+CREATE TABLE Ventanilla (
+    cod_caja SMALLINT UNSIGNED NOT NULL,  -- Código de caja, natural de 5 cifras
+    nro_suc INT UNSIGNED NOT NULL ,  -- Número de sucursal, natural de 3 cifras
+    
+    CONSTRAINT pk_ventanilla PRIMARY KEY (cod_caja),  -- Clave primaria 
+    CONSTRAINT fk_ventanilla_caja FOREIGN KEY (cod_caja) REFERENCES Caja(cod_caja),  -- Relación con la tabla Caja
+    CONSTRAINT fk_ventanilla_sucursal FOREIGN KEY (nro_suc) REFERENCES Sucursal(nro_suc)  -- Relación con la tabla Sucursal
+) ENGINE=InnoDB;
+
+CREATE TABLE ATM (
+    cod_caja SMALLINT UNSIGNED NOT NULL,  -- Código de caja, natural de 5 cifras
+    cod_postal INT UNSIGNED NOT NULL,  -- Código postal
+    direccion VARCHAR(255) NOT NULL,  -- Dirección del ATM
+    
+    CONSTRAINT pk_atm PRIMARY KEY (cod_caja),  -- Clave primaria
+    CONSTRAINT fk_atm_cod_caja FOREIGN KEY (cod_caja) REFERENCES Caja(cod_caja),  -- Relación con la tabla Caja    
+    CONSTRAINT fk_atm_cod_postal FOREIGN KEY (cod_postal) REFERENCES Ciudad(cod_postal)  -- Relación con la tabla Ciudad
+) ENGINE=InnoDB;
+
+CREATE TABLE Transaccion (
+    nro_trans BIGINT UNSIGNED NOT NULL CHECK (nro_trans BETWEEN 1000000000 AND 9999999999),  -- Número de transacción, natural de 10 cifras
+    fecha DATE NOT NULL,  -- Fecha de la transacción
+    hora TIME NOT NULL,  -- Hora de la transacción
+    monto DECIMAL(15, 2) NOT NULL CHECK (monto > 0),  -- Monto de la transacción, real positivo con 2 decimales
+    
+    CONSTRAINT pk_transaccion PRIMARY KEY (nro_trans)  -- Clave primaria
+) ENGINE=InnoDB;
+
+CREATE TABLE Debito (
+    nro_trans BIGINT UNSIGNED NOT NULL,  -- Número de transacción, natural de 10 cifras
+    descripcion VARCHAR(255) NOT NULL,  -- Descripción del débito
+    nro_cliente BIGINT UNSIGNED NOT NULL,  -- Número de cliente
+    nro_ca BIGINT UNSIGNED NOT NULL,  -- Número de Caja de Ahorro
+    
+    
+    CONSTRAINT pk_debito PRIMARY KEY (nro_trans),  -- Clave primaria
+    
+    CONSTRAINT fk_debito_transaccion FOREIGN KEY (nro_trans) REFERENCES Transaccion(nro_trans),  -- Relación con la tabla Transaccion    
+    CONSTRAINT fk_debito_cliente_ca FOREIGN KEY (nro_cliente, nro_ca) REFERENCES Cliente_CA(nro_cliente, nro_ca)  -- Relación con la tabla Cliente_CA
+) ENGINE=InnoDB;
+
+CREATE TABLE Transaccion_por_Caja (
+    nro_trans BIGINT UNSIGNED NOT NULL,  -- Número de transacción, natural de 10 cifras
+    cod_caja SMALLINT UNSIGNED NOT NULL,  -- Código de caja, natural de 5 cifras
+    
+    CONSTRAINT pk_transaccion_por_caja PRIMARY KEY (nro_trans),  -- Clave primaria
+    
+    CONSTRAINT fk_transaccion_por_caja_transaccion FOREIGN KEY (nro_trans) REFERENCES Transaccion(nro_trans),  -- Relación con la tabla Transaccion
+    CONSTRAINT fk_transaccion_por_caja_caja FOREIGN KEY (cod_caja) REFERENCES Caja(cod_caja)  -- Relación con la tabla Caja
+) ENGINE=InnoDB;
+
+CREATE TABLE Deposito (
+    nro_trans BIGINT UNSIGNED NOT NULL,  -- Número de transacción por caja, natural de 10 cifras
+    nro_ca BIGINT UNSIGNED NOT NULL,  -- Número de Caja de Ahorro
+    
+    CONSTRAINT pk_deposito PRIMARY KEY (nro_trans),  -- Clave primaria
+    
+    CONSTRAINT fk_deposito_transaccion_por_caja FOREIGN KEY (nro_trans) REFERENCES Transaccion_por_Caja(nro_trans),  -- Relación con la tabla Transaccion_por_Caja
+    CONSTRAINT fk_deposito_caja_ahorro FOREIGN KEY (nro_ca) REFERENCES Caja_Ahorro(nro_ca)  -- Relación con la tabla Caja_Ahorro
+) ENGINE=InnoDB;
+
+CREATE TABLE Extraccion (
+    nro_trans BIGINT UNSIGNED NOT NULL,  -- Número de transacción por caja, natural de 10 cifras
+    nro_cliente BIGINT UNSIGNED NOT NULL,  -- Número de cliente
+    nro_ca BIGINT UNSIGNED NOT NULL,  -- Número de Caja de Ahorro
+    
+    CONSTRAINT pk_extraccion PRIMARY KEY (nro_trans),  -- Clave primaria
+    
+    CONSTRAINT fk_extraccion_transaccion_por_caja FOREIGN KEY (nro_trans) REFERENCES Transaccion_por_Caja(nro_trans),  -- Relación con la tabla Transaccion_por_Caja
+    CONSTRAINT fk_extraccion_cliente_ca FOREIGN KEY (nro_cliente, nro_ca) REFERENCES Cliente_CA(nro_cliente, nro_ca)  -- Relación con la tabla Cliente_CA
+) ENGINE=InnoDB;
+
+CREATE TABLE Transferencia (
+    nro_trans BIGINT UNSIGNED NOT NULL,  -- Número de transacción por caja, natural de 10 cifras
+    nro_cliente BIGINT UNSIGNED NOT NULL,  -- Número de cliente
+    origen BIGINT UNSIGNED NOT NULL,  -- Número de Caja de Ahorro de origen
+    destino BIGINT UNSIGNED NOT NULL,  -- Número de Caja de Ahorro destino
+    
+    CONSTRAINT pk_transferencia PRIMARY KEY (nro_trans),  -- Clave primaria
+    
+    CONSTRAINT fk_transferencia_transaccion_por_caja FOREIGN KEY (nro_trans) REFERENCES Transaccion_por_Caja(nro_trans),  -- Relación con la tabla Transaccion_por_Caja
+    CONSTRAINT fk_transferencia_cliente_origen FOREIGN KEY (nro_cliente, origen) REFERENCES Cliente_CA(nro_cliente, nro_ca),  -- Relación con la tabla Cliente_CA
+    CONSTRAINT fk_transferencia_caja_destino FOREIGN KEY (destino) REFERENCES Caja_Ahorro(nro_ca)  -- Relación con la tabla Caja_Ahorro
+) ENGINE=InnoDB;
 
 	
