@@ -290,4 +290,78 @@ CREATE TABLE Transferencia (
     CONSTRAINT fk_transferencia_caja_destino FOREIGN KEY (destino) REFERENCES Caja_Ahorro(nro_ca)  -- Relación con la tabla Caja_Ahorro
 ) ENGINE=InnoDB;
 
+#-------------------------------------------------------------------------
+# Creación de usuarios y otorgamiento de privilegios
+
+# primero creo un usuario con CREATE USER
+
+ CREATE USER 'admin'@'localhost'  IDENTIFIED BY 'admin';
+ 
+# el usuario admin con password 'admin' puede conectarse solo 
+# desde la desde la computadora donde se encuentra el servidor de MySQL (localhost)   
+
+# luego le otorgo privilegios utilizando solo la sentencia GRANT
+
+    GRANT ALL PRIVILEGES ON banco.* TO 'admin'@'localhost' WITH GRANT OPTION;
+
+# El usuario 'admin' tiene acceso total a todas las tablas de 
+# la B.D. banco y puede crear nuevos usuarios y otorgar privilegios.
+
+CREATE USER 'empleado'@'%' IDENTIFIED BY 'empleado';
+GRANT SELECT ON banco.Empleado TO 'empleado'@'%';
+GRANT SELECT ON banco.Sucursal TO 'empleado'@'%';
+GRANT SELECT ON banco.Tasa_Plazo_Fijo TO 'empleado'@'%';
+GRANT SELECT ON banco.Tasa_Prestamo TO 'empleado'@'%';
+GRANT SELECT, INSERT ON banco.Prestamo TO 'empleado'@'%';
+GRANT SELECT, INSERT ON banco.Plazo_Fijo TO 'empleado'@'%';
+GRANT SELECT, INSERT ON banco.Plazo_Cliente TO 'empleado'@'%';
+GRANT SELECT, INSERT ON banco.Caja_Ahorro TO 'empleado'@'%';
+GRANT SELECT, INSERT ON banco.Tarjeta TO 'empleado'@'%';
+GRANT SELECT, INSERT, UPDATE ON banco.Cliente_CA TO 'empleado'@'%';
+GRANT SELECT, INSERT, UPDATE ON banco.Cliente TO 'empleado'@'%';
+GRANT SELECT, INSERT, UPDATE ON banco.Pago TO 'empleado'@'%';
+
+-- DROP USER ''@'localhost'; no hace falta porque no hay en las versiones nuevas, asi que tira error si se deja.
+
+CREATE VIEW vista_debito AS
+SELECT 
+    ca.nro_ca, ca.saldo, t.nro_trans, t.fecha, t.hora,  'deposito' AS tipo,
+    t.monto, tpc.cod_caja, NULL AS nro_cliente,
+		NULL AS tipo_doc, NULL AS nro_doc, NULL AS nombre, NULL AS apellido, NULL AS destino
+FROM Transaccion AS t
+JOIN Caja_Ahorro AS ca
+JOIN Transaccion_por_caja AS tpc;
+
+CREATE VIEW vista_extraccion AS
+SELECT 
+    ca.nro_ca, ca.saldo, t.nro_trans, t.fecha, t.hora,  'extraccion' AS tipo,
+    t.monto, tpc.cod_caja, cc.nro_cliente,
+    c.tipo_doc, c.nro_doc, c.nombre, c.apellido, NULL AS destino
+FROM Transaccion AS t
+JOIN Caja_Ahorro AS ca
+JOIN Cliente_CA AS cc
+JOIN Cliente AS c
+JOIN Transaccion_por_caja AS tpc;
+
+CREATE VIEW vista_transferencia AS
+SELECT 
+    ca.nro_ca, ca.saldo, t.nro_trans, t.fecha, t.hora,  'transferencia' AS tipo,
+    t.monto, tpc.cod_caja, cc.nro_cliente,
+    c.tipo_doc, c.nro_doc, c.nombre, c.apellido, tf.destino
+FROM Transaccion AS t
+JOIN Caja_Ahorro AS ca
+JOIN Cliente_CA AS cc
+JOIN Cliente AS c
+JOIN Transaccion_por_caja AS tpc
+JOIN Transferencia AS tf;
+
+
+-- CREATE USER 'atm'@'%' IDENTIFIED BY 'atm';
+
+-- GRANT SELECT ON banco.trans_cajas_ahorro TO 'atm'@'%';
+
+-- GRANT SELECT, UPDATE ON banco.tarjeta TO 'atm'@'%';
+
+
+
 	
