@@ -4,7 +4,7 @@ CREATE DATABASE BANCO CHARACTER SET latin1 COLLATE latin1_spanish_ci;
 USE BANCO;
 
 -- Ciudad (cod postal, nombre)
-CREATE TABLE Ciudad(
+CREATE TABLE Ciudad(	
     cod_postal INT UNSIGNED NOT NULL,
     CHECK (cod_postal > 999 AND cod_postal <= 9999),
     -- PREGUNTAR SI ES ASÍ LO QUE PIDEN, 4 DÍGITOS O CHAR
@@ -16,13 +16,12 @@ CREATE TABLE Ciudad(
 
 -- Sucursal (nro suc, nombre, direccion, telefono, horario, cod postal)
 CREATE TABLE Sucursal(
-    nro_suc INT UNSIGNED NOT NULL,
-    CHECK (nro_suc > 99 AND nro_suc <= 999),  -- PREGUNTAR SI ESTO ESTÁ BIEN
+    nro_suc INT UNSIGNED NOT NULL AUTO_INCREMENT,  -- PREGUNTAR SI ESTO ESTÁ BIEN
     
     nombre VARCHAR(100) NOT NULL,
     direccion VARCHAR(100) NOT NULL,
-    telefono VARCHAR(12),
-	horario VARCHAR(5),
+    telefono VARCHAR(12) NOT NULL,
+	horario VARCHAR(5) NOT NULL,
     cod_postal INT UNSIGNED NOT NULL,
     
     CONSTRAINT pk_suc
@@ -33,26 +32,19 @@ CREATE TABLE Sucursal(
 ) ENGINE=InnoDB;
 
 -- Empleado (legajo, apellido, nombre, tipo doc, nro doc, direccion, telefono, cargo, 
--- password, nro suc)
--- legajo es un natural de 4 cifras; apellido, nombre, tipo doc, direccion, telefono, cargo y password
--- son cadenas de caracteres; nro doc es un natural de 8 cifras; nro suc corresponde al n´umero de
--- una sucursal. El campo password debe ser una cadena de 32 caracteres, para poder almacenarlo
--- de forma segura utilizando la funci´on de hash MD5 provista por MySQL(ver secci´on B.2)
 CREATE TABLE Empleado(
-    legajo INT UNSIGNED NOT NULL,
+    legajo INT UNSIGNED NOT NULL AUTO_INCREMENT,
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
-    tipo_doc VARCHAR(10) NOT NULL,
+    tipo_doc VARCHAR(20) NOT NULL,
     nro_doc INT UNSIGNED NOT NULL,
     CHECK (nro_doc >= 10000000 AND nro_doc <= 99999999),
     direccion VARCHAR(100) NOT NULL,
-    telefono VARCHAR(12),
-	cargo VARCHAR(100),
+    telefono VARCHAR(12) NOT NULL,
+	cargo VARCHAR(100) NOT NULL,
     nro_suc INT UNSIGNED NOT NULL,
     
     password VARCHAR(32) NOT NULL,-- Ver qué onda con el hash
-    
-
     
     CONSTRAINT pk_legajo
     PRIMARY KEY(legajo),
@@ -63,38 +55,31 @@ CREATE TABLE Empleado(
 
 -- Cliente (nro cliente, apellido, nombre, tipo doc, nro doc, direccion, telefono, fecha nac)
 CREATE TABLE Cliente(
-	nro_cliente BIGINT UNSIGNED NOT NULL,
-	CHECK (nro_cliente > 9999 AND nro_cliente <= 100000),
+	nro_cliente BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
-    tipo_doc VARCHAR(10) NOT NULL,
-    nro_doc INT SIGNED NOT NULL,
+    tipo_doc VARCHAR(20) NOT NULL,
+    nro_doc INT UNSIGNED NOT NULL,
     CHECK (nro_doc >= 10000000 AND nro_doc <= 99999999),
     direccion VARCHAR(100) NOT NULL,
-    telefono VARCHAR(12),
-	fecha_nac VARCHAR(100), -- No especifica qué tipo de dato es
-	nro_suc INT UNSIGNED NOT NULL,
-    
+    telefono VARCHAR(12) NOT NULL,
+	fecha_nac DATE NOT NULL, -- No especifica qué tipo de dato es
+     
     CONSTRAINT pk_nro_cliente
-    PRIMARY KEY(nro_cliente),
+    PRIMARY KEY(nro_cliente)
 
-    CONSTRAINT fk_cliente_nro_suc
-    FOREIGN KEY(nro_suc) REFERENCES Sucursal(nro_suc) -- por que numero de sucursal foreign key?
 ) ENGINE=InnoDB;
 
 -- Plazo Fijo (nro plazo, capital, fecha inicio, fecha fin, tasa interes, interes, nro suc)
--- SIN TERMINAR 
 CREATE TABLE Plazo_Fijo(
 	
-    nro_plazo BIGINT UNSIGNED AUTO_INCREMENT NOT NULL,
-    capital DECIMAL(16,2) UNSIGNED NOT NULL CHECK (capital > 0),
+    nro_plazo BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    capital DECIMAL(16,2) UNSIGNED NOT NULL,
     fecha_inicio DATE NOT NULL,
     fecha_fin DATE NOT NULL,
-    tasa_interes decimal(4,2) UNSIGNED NOT NULL, -- Real positivo con 2 decimales
-    interes DECIMAL(16,2) UNSIGNED NOT NULL CHECK (interes >= 0), -- Real positivo con 2 decimales
-	-- COLOCAR LOS NOT NULL, Y CUIDADO CON INTERES QUE ES DEBIL XD
-    
-	
+    tasa_interes DECIMAL(4, 2) UNSIGNED NOT NULL, 
+    interes DECIMAL(16, 2) UNSIGNED NOT NULL, 
+
     nro_suc INT UNSIGNED NOT NULL,
     
     CONSTRAINT pk_nro_plazo
@@ -107,12 +92,9 @@ CREATE TABLE Plazo_Fijo(
 CREATE TABLE Tasa_Plazo_Fijo (
     periodo INT UNSIGNED NOT NULL
     CHECK (periodo >= 100 AND periodo <= 999), 
-    monto_inf DECIMAL(10, 2)  
-    CHECK (monto_inf > 0),
-    monto_sup DECIMAL(10, 2)  
-    CHECK (monto_sup > 0), 
-    tasa DECIMAL(5, 2)
-    CHECK (tasa > 0),
+    monto_inf DECIMAL(16, 2) UNSIGNED,
+    monto_sup DECIMAL(16, 2) UNSIGNED  , 
+    tasa DECIMAL(4, 2) UNSIGNED NOT NULL,
     
     CONSTRAINT pk_tasa_plazo_fijo
     PRIMARY KEY (periodo,monto_inf,monto_sup)  -- PREGUNTAR SI ES LLAVE COMPUESTA DE A TRES, Y CUANDO SE USA "key";
@@ -132,19 +114,32 @@ CREATE TABLE Plazo_Cliente (
 )    ENGINE=InnoDB;
 
 CREATE TABLE Prestamo (
-    nro_prestamo BIGINT UNSIGNED NOT NULL CHECK (nro_prestamo >= 10000000 AND nro_prestamo <= 99999999),  -- Natural de 8 cifras
+    nro_prestamo BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,  
     fecha DATE NOT NULL,  -- Fecha del préstamo
     cant_meses TINYINT UNSIGNED NOT NULL CHECK (cant_meses >= 1 AND cant_meses <= 99),  -- Natural de 2 cifras (1 a 99 meses)
-    monto DECIMAL(10, 2) NOT NULL CHECK (monto > 0),  -- Monto del préstamo, real positivo con 2 decimales
-    tasa_interes DECIMAL(5, 2) NOT NULL CHECK (tasa_interes > 0),  -- Tasa de interés, real positivo con 2 decimales
-    interes DECIMAL(10, 2)  CHECK (interes > 0),  -- CONSULTAR SI EL HECHO DE QUE EN EL GRAFICO SE VEAN COMO
-    valor_cuota DECIMAL(10, 2)  CHECK (valor_cuota > 0),  -- ATRIBUTOS DEBILES SIGNIFICA QUE NO DEBEN SER NO NULOS
+    monto DECIMAL(10, 2) UNSIGNED NOT NULL,  -- Monto del préstamo, real positivo con 2 decimales
+    tasa_interes DECIMAL(4, 2) UNSIGNED NOT NULL ,  -- Tasa de interés, real positivo con 2 decimales
+    interes DECIMAL(9, 2) UNSIGNED NOT NULL,  -- CONSULTAR SI EL HECHO DE QUE EN EL GRAFICO SE VEAN COMO
+    valor_cuota DECIMAL(9, 2) UNSIGNED NOT NULL,  -- ATRIBUTOS DEBILES SIGNIFICA QUE NO DEBEN SER NO NULOS
     legajo INT UNSIGNED NOT NULL,  -- Referencia al legajo del empleado
     nro_cliente BIGINT UNSIGNED NOT NULL,  -- Referencia al número de cliente
     
     CONSTRAINT pk_prestamo PRIMARY KEY (nro_prestamo),  -- Clave primaria en nro_prestamo
     CONSTRAINT fk_prestamo_empleado FOREIGN KEY (legajo) REFERENCES Empleado(legajo),  -- Relación con Empleado
     CONSTRAINT fk_prestamo_cliente FOREIGN KEY (nro_cliente) REFERENCES Cliente(nro_cliente)  -- Relación con Cliente
+) ENGINE=InnoDB;
+
+CREATE TABLE Tasa_Prestamo (
+    periodo SMALLINT UNSIGNED NOT NULL,  -- Natural de 3 cifras
+    monto_inf DECIMAL(10, 2) UNSIGNED NOT NULL,  -- Real positivo con 2 decimales
+    monto_sup DECIMAL(10, 2) UNSIGNED NOT NULL,  -- ESTA OPERACION NO ES VALIDA EN SQL: (monto_sup > 0 AND monto_sup > monto_inf)
+    tasa DECIMAL(4, 2) UNSIGNED NOT NULL,  -- Real positivo con 2 decimales
+    
+    CONSTRAINT pk_tasa_prestamo PRIMARY KEY (periodo, monto_inf, monto_sup),  -- Clave primaria compuesta
+    
+    CONSTRAINT chk_monto_inf CHECK (monto_inf > 0),  -- Real positivo con 2 decimales
+    CONSTRAINT chk_monto_sup CHECK (monto_sup > 0),  -- Real positivo
+    CONSTRAINT chk_tasa CHECK (tasa > 0)  -- Real positivo con 2 decimales
 ) ENGINE=InnoDB;
 
 CREATE TABLE Pago ( -- PREGUNTAR YA QUE ES ENTIDAD DEBIL
@@ -157,23 +152,10 @@ CREATE TABLE Pago ( -- PREGUNTAR YA QUE ES ENTIDAD DEBIL
     CONSTRAINT fk_pago_prestamo FOREIGN KEY (nro_prestamo) REFERENCES Prestamo(nro_prestamo)  -- Clave foránea hacia Prestamo
 ) ENGINE=InnoDB;
 
-CREATE TABLE Tasa_Prestamo (
-    periodo SMALLINT UNSIGNED NOT NULL,  -- Natural de 3 cifras
-    monto_inf DECIMAL(10, 2) NOT NULL,  -- Real positivo con 2 decimales
-    monto_sup DECIMAL(10, 2) NOT NULL,  -- ESTA OPERACION NO ES VALIDA EN SQL: (monto_sup > 0 AND monto_sup > monto_inf)
-    tasa DECIMAL(5, 2) NOT NULL,  -- Real positivo con 2 decimales
-    
-    CONSTRAINT pk_tasa_prestamo PRIMARY KEY (periodo, monto_inf, monto_sup),  -- Clave primaria compuesta
-    
-    CONSTRAINT chk_monto_inf CHECK (monto_inf > 0),  -- Real positivo con 2 decimales
-    CONSTRAINT chk_monto_sup CHECK (monto_sup > 0),  -- Real positivo
-    CONSTRAINT chk_tasa CHECK (tasa > 0)  -- Real positivo con 2 decimales
-) ENGINE=InnoDB;
-
 CREATE TABLE Caja_Ahorro (
-    nro_ca BIGINT UNSIGNED NOT NULL CHECK (nro_ca >= 10000000 AND nro_ca <= 99999999),  -- Natural de 8 cifras
+    nro_ca BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,  -- Natural de 8 cifras
     CBU BIGINT UNSIGNED NOT NULL CHECK (CBU >= 100000000000000000 AND CBU <= 999999999999999999),  -- Natural de 18 cifras
-    saldo DECIMAL(15, 2) NOT NULL CHECK (saldo >= 0),  -- Real positivo con 2 decimales
+    saldo DECIMAL(16, 2) UNSIGNED NOT NULL CHECK (saldo >= 0),  -- Real positivo con 2 decimales
     
     CONSTRAINT pk_caja_ahorro PRIMARY KEY (nro_ca)  -- Clave primaria
 ) ENGINE=InnoDB;
@@ -188,7 +170,7 @@ CREATE TABLE Cliente_CA ( -- RELACION  MUCHOS A MUCHOS
 ) ENGINE=InnoDB;
 
 CREATE TABLE Tarjeta (
-    nro_tarjeta BIGINT UNSIGNED NOT NULL CHECK (nro_tarjeta BETWEEN 1000000000000000 AND 9999999999999999),  -- Número de tarjeta, natural de 16 cifras
+    nro_tarjeta BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,  -- Número de tarjeta, natural de 16 cifras
     PIN CHAR(32) NOT NULL,  -- PIN almacenado como cadena de 32 caracteres
     CVT CHAR(32) NOT NULL,  -- CVT almacenado como cadena de 32 caracteres
     fecha_venc DATE NOT NULL,  -- Fecha de vencimiento
@@ -200,7 +182,7 @@ CREATE TABLE Tarjeta (
 ) ENGINE=InnoDB;
 
 CREATE TABLE Caja (
-    cod_caja SMALLINT UNSIGNED NOT NULL CHECK (cod_caja BETWEEN 10000 AND 99999),  -- Código de caja, natural de 5 cifras
+    cod_caja SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,  -- Código de caja, natural de 5 cifras
     
     CONSTRAINT pk_caja PRIMARY KEY (cod_caja)  -- Clave primaria
 ) ENGINE=InnoDB;
@@ -225,17 +207,17 @@ CREATE TABLE ATM (
 ) ENGINE=InnoDB;
 
 CREATE TABLE Transaccion (
-    nro_trans BIGINT UNSIGNED NOT NULL CHECK (nro_trans BETWEEN 1000000000 AND 9999999999),  -- Número de transacción, natural de 10 cifras
+    nro_trans BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,  -- Número de transacción, natural de 10 cifras
     fecha DATE NOT NULL,  -- Fecha de la transacción
     hora TIME NOT NULL,  -- Hora de la transacción
-    monto DECIMAL(15, 2) NOT NULL CHECK (monto > 0),  -- Monto de la transacción, real positivo con 2 decimales
+    monto DECIMAL(16, 2) UNSIGNED NOT NULL CHECK (monto > 0),  -- Monto de la transacción, real positivo con 2 decimales
     
     CONSTRAINT pk_transaccion PRIMARY KEY (nro_trans)  -- Clave primaria
 ) ENGINE=InnoDB;
 
 CREATE TABLE Debito (
     nro_trans BIGINT UNSIGNED NOT NULL,  -- Número de transacción, natural de 10 cifras
-    descripcion VARCHAR(255) NOT NULL,  -- Descripción del débito
+    descripcion TEXT,  -- Descripción del débito
     nro_cliente BIGINT UNSIGNED NOT NULL,  -- Número de cliente
     nro_ca BIGINT UNSIGNED NOT NULL,  -- Número de Caja de Ahorro
     
