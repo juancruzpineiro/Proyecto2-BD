@@ -32,12 +32,7 @@ CREATE TABLE Sucursal(
     FOREIGN KEY(cod_postal) REFERENCES Ciudad(cod_postal)
 ) ENGINE=InnoDB;
 
--- Empleado (legajo, apellido, nombre, tipo doc, nro doc, direccion, telefono, cargo, 
--- password, nro suc)
--- legajo es un natural de 4 cifras; apellido, nombre, tipo doc, direccion, telefono, cargo y password
--- son cadenas de caracteres; nro doc es un natural de 8 cifras; nro suc corresponde al n´umero de
--- una sucursal. El campo password debe ser una cadena de 32 caracteres, para poder almacenarlo
--- de forma segura utilizando la funci´on de hash MD5 provista por MySQL(ver secci´on B.2)
+-- Empleado (legajo, apellido, nombre, tipo doc, nro doc, direccion, telefono, cargo, password, nro suc)
 CREATE TABLE Empleado(
     legajo INT UNSIGNED NOT NULL,
     nombre VARCHAR(100) NOT NULL,
@@ -51,7 +46,6 @@ CREATE TABLE Empleado(
     nro_suc INT UNSIGNED NOT NULL,
     
     password VARCHAR(32) NOT NULL,-- Ver qué onda con el hash
-    
 
     
     CONSTRAINT pk_legajo
@@ -86,12 +80,12 @@ CREATE TABLE Cliente(
 -- SIN TERMINAR 
 CREATE TABLE Plazo_Fijo(
 	
-    nro_plazo BIGINT UNSIGNED NOT NULL CHECK (nro_plazo >= 10000000 AND nro_plazo <= 99999999),
-    capital DECIMAL(10, 2) CHECK (capital > 0),
-    fecha_inicio DATE,
-    fecha_fin DATE,
-    tasa_interes DECIMAL(5, 2) CHECK (tasa_interes > 0), -- Real positivo con 2 decimales
-    interes DECIMAL(10, 2) CHECK (interes >= 0), -- Real positivo con 2 decimales
+    nro_plazo BIGINT UNSIGNED AUTO_INCREMENT NOT NULL,
+    capital DECIMAL(16,2) UNSIGNED NOT NULL CHECK (capital > 0),
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NOT NULL,
+    tasa_interes decimal(4,2) UNSIGNED NOT NULL, -- Real positivo con 2 decimales
+    interes DECIMAL(16,2) UNSIGNED NOT NULL CHECK (interes >= 0), -- Real positivo con 2 decimales
 	-- COLOCAR LOS NOT NULL, Y CUIDADO CON INTERES QUE ES DEBIL XD
     
 	
@@ -105,14 +99,11 @@ CREATE TABLE Plazo_Fijo(
 ) ENGINE=InnoDB;
 
 CREATE TABLE Tasa_Plazo_Fijo (
-    periodo INT UNSIGNED NOT NULL
+    periodo INT UNSIGNED NOT NULL,
     CHECK (periodo >= 100 AND periodo <= 999), 
-    monto_inf DECIMAL(10, 2)  
-    CHECK (monto_inf > 0),
-    monto_sup DECIMAL(10, 2)  
-    CHECK (monto_sup > 0), 
-    tasa DECIMAL(5, 2)
-    CHECK (tasa > 0),
+    monto_inf DECIMAL(16,2) UNSIGNED,
+    monto_sup DECIMAL(16,2) UNSIGNED,
+    tasa DECIMAL(4,2) UNSIGNED NOT NULL,
     
     CONSTRAINT pk_tasa_plazo_fijo
     PRIMARY KEY (periodo,monto_inf,monto_sup)  -- PREGUNTAR SI ES LLAVE COMPUESTA DE A TRES, Y CUANDO SE USA "key";
@@ -132,13 +123,13 @@ CREATE TABLE Plazo_Cliente (
 )    ENGINE=InnoDB;
 
 CREATE TABLE Prestamo (
-    nro_prestamo BIGINT UNSIGNED NOT NULL CHECK (nro_prestamo >= 10000000 AND nro_prestamo <= 99999999),  -- Natural de 8 cifras
+    nro_prestamo BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, 
     fecha DATE NOT NULL,  -- Fecha del préstamo
     cant_meses TINYINT UNSIGNED NOT NULL CHECK (cant_meses >= 1 AND cant_meses <= 99),  -- Natural de 2 cifras (1 a 99 meses)
-    monto DECIMAL(10, 2) NOT NULL CHECK (monto > 0),  -- Monto del préstamo, real positivo con 2 decimales
-    tasa_interes DECIMAL(5, 2) NOT NULL CHECK (tasa_interes > 0),  -- Tasa de interés, real positivo con 2 decimales
-    interes DECIMAL(10, 2)  CHECK (interes > 0),  -- CONSULTAR SI EL HECHO DE QUE EN EL GRAFICO SE VEAN COMO
-    valor_cuota DECIMAL(10, 2)  CHECK (valor_cuota > 0),  -- ATRIBUTOS DEBILES SIGNIFICA QUE NO DEBEN SER NO NULOS
+    monto DECIMAL(10, 2) UNSIGNED NOT NULL,  -- Monto del préstamo, real positivo con 2 decimales
+    tasa_interes DECIMAL(4, 2) UNSIGNED NOT NULL,  -- Tasa de interés, real positivo con 2 decimales
+    interes DECIMAL(9, 2) UNSIGNED NOT NULL,  -- CONSULTAR SI EL HECHO DE QUE EN EL GRAFICO SE VEAN COMO
+    valor_cuota DECIMAL(9, 2)  UNSIGNED NOT NULL,  -- ATRIBUTOS DEBILES SIGNIFICA QUE NO DEBEN SER NO NULOS
     legajo INT UNSIGNED NOT NULL,  -- Referencia al legajo del empleado
     nro_cliente BIGINT UNSIGNED NOT NULL,  -- Referencia al número de cliente
     
