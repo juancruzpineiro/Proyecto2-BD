@@ -7,7 +7,6 @@ USE BANCO;
 CREATE TABLE Ciudad(	
     cod_postal INT UNSIGNED NOT NULL,
     CHECK (cod_postal > 999 AND cod_postal <= 9999),
-    -- PREGUNTAR SI ES ASÍ LO QUE PIDEN, 4 DÍGITOS O CHAR
     nombre VARCHAR(100) NOT NULL,
 
     CONSTRAINT pk_cod_postal
@@ -16,7 +15,7 @@ CREATE TABLE Ciudad(
 
 -- Sucursal (nro suc, nombre, direccion, telefono, horario, cod postal)
 CREATE TABLE Sucursal(
-    nro_suc INT UNSIGNED NOT NULL AUTO_INCREMENT,  -- PREGUNTAR SI ESTO ESTÁ BIEN
+    nro_suc INT(3) UNSIGNED NOT NULL AUTO_INCREMENT,  
     
     nombre VARCHAR(100) NOT NULL,
     direccion VARCHAR(100) NOT NULL,
@@ -31,9 +30,9 @@ CREATE TABLE Sucursal(
     FOREIGN KEY(cod_postal) REFERENCES Ciudad(cod_postal)
 ) ENGINE=InnoDB;
 
--- Empleado (legajo, apellido, nombre, tipo doc, nro doc, direccion, telefono, cargo, 
+-- Empleado (legajo, apellido, nombre, tipo doc, nro doc, direccion, telefono, cargo, password, nro_suc)
 CREATE TABLE Empleado(
-    legajo INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    legajo INT(4) UNSIGNED NOT NULL AUTO_INCREMENT,
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
     tipo_doc VARCHAR(20) NOT NULL,
@@ -42,10 +41,9 @@ CREATE TABLE Empleado(
     direccion VARCHAR(100) NOT NULL,
     telefono VARCHAR(12) NOT NULL,
 	cargo VARCHAR(100) NOT NULL,
-    nro_suc INT UNSIGNED NOT NULL,
-    
-    password VARCHAR(32) NOT NULL,-- Ver qué onda con el hash
-    
+    password VARCHAR(32) NOT NULL,
+	nro_suc INT(3) UNSIGNED NOT NULL,
+        
     CONSTRAINT pk_legajo
     PRIMARY KEY(legajo),
 
@@ -55,7 +53,7 @@ CREATE TABLE Empleado(
 
 -- Cliente (nro cliente, apellido, nombre, tipo doc, nro doc, direccion, telefono, fecha nac)
 CREATE TABLE Cliente(
-	nro_cliente BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	nro_cliente BIGINT(5) UNSIGNED NOT NULL AUTO_INCREMENT,
 	nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
     tipo_doc VARCHAR(20) NOT NULL,
@@ -102,7 +100,7 @@ CREATE TABLE Tasa_Plazo_Fijo (
 
 CREATE TABLE Plazo_Cliente (
     nro_plazo BIGINT UNSIGNED NOT NULL , 
-    nro_cliente BIGINT UNSIGNED NOT NULL,
+	nro_cliente BIGINT(5) UNSIGNED NOT NULL,
     
     CONSTRAINT pk_plazo_cliente PRIMARY KEY (nro_plazo, nro_cliente),  -- Clave primaria compuesta,CONSULTAR
 
@@ -114,15 +112,15 @@ CREATE TABLE Plazo_Cliente (
 )    ENGINE=InnoDB;
 
 CREATE TABLE Prestamo (
-    nro_prestamo BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,  
+    nro_prestamo BIGINT(8) UNSIGNED NOT NULL AUTO_INCREMENT,  
     fecha DATE NOT NULL,  -- Fecha del préstamo
     cant_meses TINYINT UNSIGNED NOT NULL CHECK (cant_meses >= 1 AND cant_meses <= 99),  -- Natural de 2 cifras (1 a 99 meses)
     monto DECIMAL(10, 2) UNSIGNED NOT NULL,  -- Monto del préstamo, real positivo con 2 decimales
     tasa_interes DECIMAL(4, 2) UNSIGNED NOT NULL ,  -- Tasa de interés, real positivo con 2 decimales
-    interes DECIMAL(9, 2) UNSIGNED NOT NULL,  -- CONSULTAR SI EL HECHO DE QUE EN EL GRAFICO SE VEAN COMO
-    valor_cuota DECIMAL(9, 2) UNSIGNED NOT NULL,  -- ATRIBUTOS DEBILES SIGNIFICA QUE NO DEBEN SER NO NULOS
+    interes DECIMAL(9, 2) UNSIGNED NOT NULL, 
+    valor_cuota DECIMAL(9, 2) UNSIGNED NOT NULL,  
     legajo INT UNSIGNED NOT NULL,  -- Referencia al legajo del empleado
-    nro_cliente BIGINT UNSIGNED NOT NULL,  -- Referencia al número de cliente
+    nro_cliente BIGINT(5) UNSIGNED NOT NULL, -- Referencia al número de cliente
     
     CONSTRAINT pk_prestamo PRIMARY KEY (nro_prestamo),  -- Clave primaria en nro_prestamo
     CONSTRAINT fk_prestamo_empleado FOREIGN KEY (legajo) REFERENCES Empleado(legajo),  -- Relación con Empleado
@@ -132,7 +130,7 @@ CREATE TABLE Prestamo (
 CREATE TABLE Tasa_Prestamo (
     periodo SMALLINT UNSIGNED NOT NULL,  -- Natural de 3 cifras
     monto_inf DECIMAL(10, 2) UNSIGNED NOT NULL,  -- Real positivo con 2 decimales
-    monto_sup DECIMAL(10, 2) UNSIGNED NOT NULL,  -- ESTA OPERACION NO ES VALIDA EN SQL: (monto_sup > 0 AND monto_sup > monto_inf)
+    monto_sup DECIMAL(10, 2) UNSIGNED NOT NULL,  
     tasa DECIMAL(4, 2) UNSIGNED NOT NULL,  -- Real positivo con 2 decimales
     
     CONSTRAINT pk_tasa_prestamo PRIMARY KEY (periodo, monto_inf, monto_sup),  -- Clave primaria compuesta
@@ -142,8 +140,8 @@ CREATE TABLE Tasa_Prestamo (
     CONSTRAINT chk_tasa CHECK (tasa > 0)  -- Real positivo con 2 decimales
 ) ENGINE=InnoDB;
 
-CREATE TABLE Pago ( -- PREGUNTAR YA QUE ES ENTIDAD DEBIL
-    nro_prestamo BIGINT UNSIGNED NOT NULL,  -- Referencia a nro_prestamo en la tabla Prestamo
+CREATE TABLE Pago ( 
+    nro_prestamo BIGINT UNSIGNED NOT NULL,  
     nro_pago TINYINT UNSIGNED NOT NULL CHECK (nro_pago >= 1 AND nro_pago <= 99),  -- Natural de 2 cifras (1 a 99)
     fecha_venc DATE NOT NULL,  -- Fecha de vencimiento del pago
     fecha_pago DATE,  -- Fecha en que se realizó el pago (puede ser NULL si no se ha pagado)
@@ -153,7 +151,7 @@ CREATE TABLE Pago ( -- PREGUNTAR YA QUE ES ENTIDAD DEBIL
 ) ENGINE=InnoDB;
 
 CREATE TABLE Caja_Ahorro (
-    nro_ca BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,  -- Natural de 8 cifras
+    nro_ca BIGINT(8) UNSIGNED NOT NULL AUTO_INCREMENT,  -- Natural de 8 cifras
     CBU BIGINT UNSIGNED NOT NULL CHECK (CBU >= 100000000000000000 AND CBU <= 999999999999999999),  -- Natural de 18 cifras
     saldo DECIMAL(16, 2) UNSIGNED NOT NULL CHECK (saldo >= 0),  -- Real positivo con 2 decimales
     
@@ -170,7 +168,7 @@ CREATE TABLE Cliente_CA ( -- RELACION  MUCHOS A MUCHOS
 ) ENGINE=InnoDB;
 
 CREATE TABLE Tarjeta (
-    nro_tarjeta BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,  -- Número de tarjeta, natural de 16 cifras
+    nro_tarjeta BIGINT(16) UNSIGNED NOT NULL AUTO_INCREMENT,  -- Número de tarjeta, natural de 16 cifras
     PIN CHAR(32) NOT NULL,  -- PIN almacenado como cadena de 32 caracteres
     CVT CHAR(32) NOT NULL,  -- CVT almacenado como cadena de 32 caracteres
     fecha_venc DATE NOT NULL,  -- Fecha de vencimiento
@@ -182,13 +180,13 @@ CREATE TABLE Tarjeta (
 ) ENGINE=InnoDB;
 
 CREATE TABLE Caja (
-    cod_caja SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,  -- Código de caja, natural de 5 cifras
+    cod_caja INT(5) UNSIGNED NOT NULL AUTO_INCREMENT,  -- Código de caja, natural de 5 cifras
     
     CONSTRAINT pk_caja PRIMARY KEY (cod_caja)  -- Clave primaria
 ) ENGINE=InnoDB;
 
 CREATE TABLE Ventanilla (
-    cod_caja SMALLINT UNSIGNED NOT NULL,  -- Código de caja, natural de 5 cifras
+    cod_caja INT(5) UNSIGNED NOT NULL,  -- Código de caja, natural de 5 cifras
     nro_suc INT UNSIGNED NOT NULL ,  -- Número de sucursal, natural de 3 cifras
     
     CONSTRAINT pk_ventanilla PRIMARY KEY (cod_caja),  -- Clave primaria 
@@ -197,7 +195,7 @@ CREATE TABLE Ventanilla (
 ) ENGINE=InnoDB;
 
 CREATE TABLE ATM (
-    cod_caja SMALLINT UNSIGNED NOT NULL,  -- Código de caja, natural de 5 cifras
+    cod_caja INT(5) UNSIGNED NOT NULL,  -- Código de caja, natural de 5 cifras
     cod_postal INT UNSIGNED NOT NULL,  -- Código postal
     direccion VARCHAR(255) NOT NULL,  -- Dirección del ATM
     
@@ -207,7 +205,7 @@ CREATE TABLE ATM (
 ) ENGINE=InnoDB;
 
 CREATE TABLE Transaccion (
-    nro_trans BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,  -- Número de transacción, natural de 10 cifras
+    nro_trans BIGINT(10) UNSIGNED NOT NULL AUTO_INCREMENT,  -- Número de transacción, natural de 10 cifras
     fecha DATE NOT NULL,  -- Fecha de la transacción
     hora TIME NOT NULL,  -- Hora de la transacción
     monto DECIMAL(16, 2) UNSIGNED NOT NULL CHECK (monto > 0),  -- Monto de la transacción, real positivo con 2 decimales
@@ -230,7 +228,7 @@ CREATE TABLE Debito (
 
 CREATE TABLE Transaccion_por_Caja (
     nro_trans BIGINT UNSIGNED NOT NULL,  -- Número de transacción, natural de 10 cifras
-    cod_caja SMALLINT UNSIGNED NOT NULL,  -- Código de caja, natural de 5 cifras
+    cod_caja INT(5) UNSIGNED NOT NULL,  -- Código de caja, natural de 5 cifras
     
     CONSTRAINT pk_transaccion_por_caja PRIMARY KEY (nro_trans),  -- Clave primaria
     
@@ -307,42 +305,65 @@ GRANT SELECT, INSERT, UPDATE ON banco.Pago TO 'empleado'@'%';
 
 CREATE VIEW vista_debito AS
 SELECT 
+    ca.nro_ca, ca.saldo, t.nro_trans, t.fecha, t.hora,  'debito' AS tipo,
+    t.monto, NULL AS cod_caja, cc.nro_cliente,
+    c.tipo_doc, c.nro_doc, c.nombre, c.apellido, NULL AS destino
+FROM Debito d
+JOIN Caja_Ahorro ca ON d.nro_ca = ca.nro_ca
+JOIN Cliente_CA cc ON ca.nro_ca = cc.nro_ca
+JOIN Cliente c ON c.nro_cliente = cc.nro_cliente
+JOIN Transaccion t ON d.nro_trans = t.nro_trans;
+
+CREATE VIEW vista_deposito AS
+SELECT 
     ca.nro_ca, ca.saldo, t.nro_trans, t.fecha, t.hora,  'deposito' AS tipo,
     t.monto, tpc.cod_caja, NULL AS nro_cliente,
 		NULL AS tipo_doc, NULL AS nro_doc, NULL AS nombre, NULL AS apellido, NULL AS destino
-FROM Transaccion AS t
-JOIN Caja_Ahorro AS ca
-JOIN Transaccion_por_caja AS tpc;
+FROM Deposito d
+JOIN Caja_Ahorro ca ON d.nro_ca = ca.nro_ca
+JOIN Transaccion_por_caja tpc  
+JOIN Transaccion t ON d.nro_trans = t.nro_trans AND t.nro_trans = tpc.nro_trans;
 
 CREATE VIEW vista_extraccion AS
 SELECT 
-    ca.nro_ca, ca.saldo, t.nro_trans, t.fecha, t.hora,  'extraccion' AS tipo,
+    ca.nro_ca, ca.saldo, e.nro_trans, t.fecha, t.hora,  'extraccion' AS tipo,
     t.monto, tpc.cod_caja, cc.nro_cliente,
     c.tipo_doc, c.nro_doc, c.nombre, c.apellido, NULL AS destino
-FROM Transaccion AS t
-JOIN Caja_Ahorro AS ca
-JOIN Cliente_CA AS cc
-JOIN Cliente AS c
-JOIN Transaccion_por_caja AS tpc;
+FROM Extraccion e
+JOIN Transaccion t ON e.nro_trans = t.nro_trans
+JOIN Caja_Ahorro ca ON e.nro_ca = ca.nro_ca
+JOIN Cliente_CA cc ON ca.nro_ca = cc.nro_ca
+JOIN Cliente c ON c.nro_cliente = cc.nro_cliente
+JOIN Transaccion_por_caja tpc ON t.nro_trans = tpc.nro_trans ;
 
 CREATE VIEW vista_transferencia AS
 SELECT 
-    ca.nro_ca, ca.saldo, t.nro_trans, t.fecha, t.hora,  'transferencia' AS tipo,
+    ca.nro_ca, ca.saldo, tf.nro_trans, t.fecha, t.hora,  'transferencia' AS tipo,
     t.monto, tpc.cod_caja, cc.nro_cliente,
     c.tipo_doc, c.nro_doc, c.nombre, c.apellido, tf.destino
-FROM Transaccion AS t
-JOIN Caja_Ahorro AS ca
-JOIN Cliente_CA AS cc
-JOIN Cliente AS c
-JOIN Transaccion_por_caja AS tpc
-JOIN Transferencia AS tf;
+FROM Transferencia tf
+JOIN Caja_Ahorro ca ON tf.origen = ca.nro_ca
+JOIN Cliente_CA cc ON ca.nro_ca = cc.nro_ca AND tf.nro_cliente = cc.nro_cliente
+JOIN Cliente c ON c.nro_cliente = cc.nro_cliente
+JOIN Transaccion_por_caja tpc 
+JOIN Transaccion t ON tf.nro_trans = tpc.nro_trans AND t.nro_trans = tpc.nro_trans;
+
+CREATE VIEW trans_cajas_ahorro AS
+SELECT * FROM vista_debito
+UNION ALL
+SELECT * FROM vista_deposito
+UNION ALL
+SELECT * FROM vista_extraccion
+UNION ALL
+SELECT * FROM vista_transferencia;
 
 
--- CREATE USER 'atm'@'%' IDENTIFIED BY 'atm';
 
--- GRANT SELECT ON banco.trans_cajas_ahorro TO 'atm'@'%';
+CREATE USER 'atm'@'%' IDENTIFIED BY 'atm';
 
--- GRANT SELECT, UPDATE ON banco.tarjeta TO 'atm'@'%';
+GRANT SELECT ON banco.trans_cajas_ahorro TO 'atm'@'%';
+
+GRANT SELECT, UPDATE ON banco.tarjeta TO 'atm'@'%';
 
 
 
