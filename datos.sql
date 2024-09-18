@@ -1,3 +1,7 @@
+## -----     PROYECTO 1 - BASES DE DATOS     ----- ##
+## -----      Dulce, Sahid (LU 139.656)      ----- ##
+## -----    Piñeiro, Juan Cruz (LU 121.302)  ----- ##
+
 INSERT INTO Ciudad VALUES (1001, 'Buenos Aires');
 INSERT INTO Ciudad VALUES (5000, 'Córdoba');
 INSERT INTO Ciudad VALUES (7600, 'Mar del Plata');
