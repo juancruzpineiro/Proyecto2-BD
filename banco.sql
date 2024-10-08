@@ -26,7 +26,7 @@ CREATE TABLE Sucursal(
     nombre VARCHAR(100) NOT NULL,
     direccion VARCHAR(100) NOT NULL,
     telefono VARCHAR(12) NOT NULL,
-	horario VARCHAR(5) NOT NULL,
+    horario VARCHAR(30) NOT NULL,
     cod_postal INT UNSIGNED NOT NULL,
     
     CONSTRAINT pk_suc
@@ -64,7 +64,6 @@ CREATE TABLE Cliente(
     apellido VARCHAR(100) NOT NULL,
     tipo_doc VARCHAR(20) NOT NULL,
     nro_doc INT UNSIGNED NOT NULL,
-    CHECK (nro_doc >= 10000000 AND nro_doc <= 99999999),
     direccion VARCHAR(100) NOT NULL,
     telefono VARCHAR(12) NOT NULL,
 	fecha_nac DATE NOT NULL, 
@@ -163,8 +162,7 @@ CREATE TABLE Pago (
 
 -- Caja Ahorro (nro ca, CBU, saldo)
 CREATE TABLE Caja_Ahorro (
-    nro_ca BIGINT(8) UNSIGNED NOT NULL AUTO_INCREMENT,  
-    CBU BIGINT UNSIGNED NOT NULL CHECK (CBU >= 100000000000000000 AND CBU <= 999999999999999999),  
+    nro_ca BIGINT(8) UNSIGNED NOT NULL AUTO_INCREMENT,    
     saldo DECIMAL(16, 2) UNSIGNED NOT NULL CHECK (saldo >= 0),
     
     CONSTRAINT pk_caja_ahorro PRIMARY KEY (nro_ca)
